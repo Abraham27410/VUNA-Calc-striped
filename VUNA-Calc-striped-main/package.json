@@ -1,0 +1,34 @@
+{
+  "name": "vuna-calculator",
+  "version": "1.0.0",
+  "description": "A smart calculator with theme support and memory features",
+  "main": "calculator/assets/js/script.js",
+  "scripts": {
+    "dev": "echo \"Running in development mode...\" && echo \"Open index.html in browser\"",
+    "lint": "eslint calculator/assets/js/",
+    "lint:fix": "eslint calculator/assets/js/ --fix",
+    "format": "prettier --write calculator/assets/js/",
+    "format:check": "prettier --check calculator/assets/js/",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "build": "echo \"Project is already optimized\"",
+    "precommit": "npm run lint"
+  },
+  "keywords": [
+    "calculator",
+    "math",
+    "javascript"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-prettier": "^5.0.0",
+    "jest": "^30.4.2",
+    "jest-environment-jsdom": "^30.4.1",
+    "jsdom": "^29.1.1",
+    "prettier": "^3.0.0"
+  }
+}
