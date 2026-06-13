@@ -16,7 +16,7 @@
     "no-unused-vars": "warn",
     "no-undef": "error"
   },
-  "ignorePatterns": ["assets/js/bootstrap.min.js"],
+  "ignorePatterns": ["calculator/assets/js/bootstrap.min.js"],
   "globals": {
     "module": "readonly"
   }

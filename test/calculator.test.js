@@ -1,6 +1,6 @@
 "use strict";
 
-const script = require('../assets/js/script.js');
+const script = require('../calculator/assets/js/script.js');
 const { normalizeExpression, calculateExpression, LAST_RESULT } = script;
 
 describe('Calculator Expression Normalization', () => {

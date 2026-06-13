@@ -27,11 +27,7 @@ RUN rm -rf /usr/share/nginx/html/*
 
 # Copy application files from builder stage
 COPY --from=builder /app/index.html /usr/share/nginx/html/
-COPY --from=builder /app/assets/ /usr/share/nginx/html/assets/
-
-# Copy configuration files for reference
-COPY --from=builder /app/package.json /usr/share/nginx/html/
-COPY --from=builder /app/.eslintrc.json /usr/share/nginx/html/
+COPY --from=builder /app/calculator/ /usr/share/nginx/html/calculator/
 COPY --from=builder /app/.gitignore /usr/share/nginx/html/
 
 # Set proper permissions

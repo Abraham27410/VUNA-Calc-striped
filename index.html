@@ -1,86 +1,773 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Calculator</title>
-  <link rel="stylesheet" href="assets/css/bootstrap.min.css" />
-  <link rel="stylesheet" href="assets/css/styles.css">
+  <title>Stackform — Internal tools from a single YAML file</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg-primary: #0f0f1a;
+      --bg-secondary: #18182b;
+      --bg-card: #1e1e35;
+      --bg-code: #14142a;
+      --border: #2a2a4a;
+      --text-primary: #e8e8f0;
+      --text-secondary: #9494b8;
+      --text-muted: #6b6b8d;
+      --accent: #00FF94;
+      --accent-dim: rgba(0, 255, 148, 0.15);
+      --accent-glow: rgba(0, 255, 148, 0.35);
+      --danger: #ff5e7a;
+      --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-code: 'Fira Code', 'JetBrains Mono', 'Cascadia Code', monospace;
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: var(--font-body);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    img, svg { display: block; max-width: 100%; }
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* --- Nav --- */
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 24px;
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+    .logo {
+      font-weight: 800;
+      font-size: 1.35rem;
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-primary);
+    }
+    .logo svg { width: 28px; height: 28px; }
+    .logo span { color: var(--accent); }
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      list-style: none;
+    }
+    .nav-links a {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--text-primary); text-decoration: none; }
+    .nav-cta {
+      background: var(--accent);
+      color: #0f0f1a !important;
+      padding: 8px 20px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      transition: box-shadow .2s;
+    }
+    .nav-cta:hover { box-shadow: 0 0 20px var(--accent-glow); text-decoration: none !important; }
+    .nav-toggle { display: none; background: none; border: none; color: var(--text-primary); font-size: 1.5rem; cursor: pointer; }
+
+    /* --- Hero --- */
+    .hero {
+      text-align: center;
+      padding: 80px 24px 60px;
+    }
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--accent-dim);
+      color: var(--accent);
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      margin-bottom: 24px;
+      border: 1px solid rgba(0,255,148,0.2);
+    }
+    .hero h1 {
+      font-size: clamp(2.4rem, 6vw, 4rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -1.5px;
+      max-width: 780px;
+      margin: 0 auto 18px;
+    }
+    .hero h1 em { font-style: normal; color: var(--accent); }
+    .hero p {
+      font-size: 1.15rem;
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto 36px;
+      line-height: 1.7;
+    }
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 48px;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #0f0f1a;
+      border: none;
+      padding: 14px 36px;
+      border-radius: var(--radius-sm);
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: box-shadow .25s, transform .2s;
+      font-family: var(--font-body);
+    }
+    .btn-primary:hover { box-shadow: 0 0 30px var(--accent-glow); transform: translateY(-2px); }
+    .btn-secondary {
+      background: transparent;
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      padding: 14px 36px;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: border-color .2s, transform .2s;
+      font-family: var(--font-body);
+    }
+    .btn-secondary:hover { border-color: var(--text-secondary); transform: translateY(-2px); }
+
+    /* Code block */
+    .code-block {
+      background: var(--bg-code);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 28px;
+      text-align: left;
+      max-width: 680px;
+      margin: 0 auto;
+      position: relative;
+      overflow-x: auto;
+    }
+    .code-block .filename {
+      position: absolute;
+      top: 12px;
+      right: 16px;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-family: var(--font-code);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .code-block pre {
+      font-family: var(--font-code);
+      font-size: 0.85rem;
+      line-height: 1.65;
+      color: var(--text-primary);
+      white-space: pre;
+    }
+    .code-block code { font-family: var(--font-code); }
+    .token-key { color: #7ec8f0; }
+    .token-string { color: #a8e6a8; }
+    .token-number { color: #f5a97f; }
+    .token-boolean { color: #f5a97f; }
+    .token-comment { color: #6b6b8d; font-style: italic; }
+    .token-punctuation { color: var(--text-secondary); }
+    .token-table { color: #c9a0ff; }
+
+    /* --- Section shared --- */
+    section { padding: 80px 0; }
+    .section-label {
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 2px;
+      color: var(--accent);
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      margin-bottom: 16px;
+    }
+    .section-sub {
+      color: var(--text-secondary);
+      max-width: 560px;
+      font-size: 1.05rem;
+      line-height: 1.7;
+    }
+
+    /* --- How It Works --- */
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 28px;
+      margin-top: 48px;
+    }
+    .step-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 28px;
+      position: relative;
+      transition: border-color .2s;
+    }
+    .step-card:hover { border-color: var(--accent); }
+    .step-number {
+      font-family: var(--font-code);
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: var(--accent);
+      opacity: 0.35;
+      line-height: 1;
+      margin-bottom: 16px;
+    }
+    .step-card h3 { font-size: 1.15rem; font-weight: 700; margin-bottom: 8px; }
+    .step-card p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; }
+    .step-arrow {
+      position: absolute;
+      top: 32px;
+      right: -20px;
+      color: var(--text-muted);
+      font-size: 1.2rem;
+    }
+    .steps-grid .step-card:last-child .step-arrow { display: none; }
+
+    /* --- Features --- */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      margin-top: 48px;
+    }
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 28px;
+      transition: border-color .2s;
+    }
+    .feature-card:hover { border-color: var(--accent); }
+    .feature-icon {
+      width: 44px;
+      height: 44px;
+      background: var(--accent-dim);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 18px;
+      color: var(--accent);
+    }
+    .feature-icon svg { width: 22px; height: 22px; }
+    .feature-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 6px; }
+    .feature-card p { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.65; }
+
+    /* --- Comparison --- */
+    .comparison-table-wrap {
+      overflow-x: auto;
+      margin-top: 48px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+    }
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 600px;
+    }
+    .comparison-table th, .comparison-table td {
+      padding: 16px 20px;
+      text-align: left;
+      font-size: 0.9rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .comparison-table th {
+      background: var(--bg-card);
+      font-weight: 700;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+    }
+    .comparison-table th:first-child { color: var(--text-primary); }
+    .comparison-table td:first-child { font-weight: 600; color: var(--text-secondary); }
+    .comparison-table tr:last-child td { border-bottom: none; }
+    .comparison-table .highlight { color: var(--accent); font-weight: 600; }
+    .comparison-table .check { color: var(--accent); }
+    .comparison-table .cross { color: var(--danger); }
+    .comparison-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+    /* --- Testimonials --- */
+    .testimonials-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 24px;
+      margin-top: 48px;
+    }
+    .testimonial-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 32px 28px;
+    }
+    .testimonial-card .stars { color: var(--accent); font-size: 1rem; margin-bottom: 12px; letter-spacing: 2px; }
+    .testimonial-card blockquote {
+      font-size: 0.95rem;
+      line-height: 1.7;
+      color: var(--text-primary);
+      margin-bottom: 20px;
+      font-style: italic;
+    }
+    .testimonial-card .author {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .testimonial-card .author-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--accent-dim);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.9rem;
+      color: var(--accent);
+    }
+    .testimonial-card .author-info strong { font-size: 0.9rem; display: block; }
+    .testimonial-card .author-info span { font-size: 0.8rem; color: var(--text-muted); }
+
+    /* --- Pricing --- */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 28px;
+      margin-top: 48px;
+      max-width: 720px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .pricing-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 36px 32px;
+      position: relative;
+      transition: border-color .2s;
+    }
+    .pricing-card.featured {
+      border-color: var(--accent);
+      background: linear-gradient(135deg, var(--bg-card) 0%, rgba(0,255,148,0.05) 100%);
+    }
+    .pricing-card.featured::before {
+      content: 'Most popular';
+      position: absolute;
+      top: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--accent);
+      color: #0f0f1a;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 4px 16px;
+      border-radius: 4px;
+    }
+    .pricing-card .plan-name { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 8px; }
+    .pricing-card .price { font-size: 2.4rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 4px; }
+    .pricing-card .price span { font-size: 1rem; font-weight: 500; color: var(--text-muted); }
+    .pricing-card .price-desc { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 24px; }
+    .pricing-card ul { list-style: none; margin-bottom: 28px; }
+    .pricing-card ul li {
+      padding: 6px 0;
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .pricing-card ul li::before { content: '✓'; color: var(--accent); font-weight: 700; }
+    .pricing-card .btn-primary,
+    .pricing-card .btn-secondary {
+      width: 100%;
+      text-align: center;
+      display: block;
+      padding: 12px;
+      font-size: 0.9rem;
+    }
+    .pricing-card .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      font-family: var(--font-body);
+      cursor: pointer;
+      transition: border-color .2s;
+      text-align: center;
+      display: block;
+    }
+    .pricing-card .btn-secondary:hover { border-color: var(--text-secondary); }
+
+    /* --- Footer --- */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 48px 24px 32px;
+    }
+    footer .container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 32px;
+    }
+    footer .footer-brand .logo { margin-bottom: 8px; }
+    footer .footer-brand p {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      max-width: 260px;
+      line-height: 1.6;
+    }
+    footer .footer-links {
+      display: flex;
+      gap: 48px;
+      flex-wrap: wrap;
+    }
+    footer .footer-links .col strong {
+      display: block;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    footer .footer-links .col a {
+      display: block;
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      padding: 4px 0;
+      transition: color .2s;
+    }
+    footer .footer-links .col a:hover { color: var(--text-primary); text-decoration: none; }
+    footer .footer-cta {
+      text-align: right;
+    }
+    footer .footer-cta .btn-primary {
+      padding: 10px 28px;
+      font-size: 0.85rem;
+    }
+    footer .footer-bottom {
+      width: 100%;
+      margin-top: 32px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    /* --- Mobile --- */
+    @media (max-width: 768px) {
+      .nav-links { display: none; }
+      .nav-toggle { display: block; }
+      .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 60px; left: 0; right: 0; background: var(--bg-secondary); padding: 24px; border-bottom: 1px solid var(--border); gap: 16px; z-index: 10; }
+      nav { position: relative; }
+      .steps-grid { grid-template-columns: 1fr; }
+      .step-arrow { display: none; }
+      .features-grid { grid-template-columns: 1fr; }
+      .testimonials-grid { grid-template-columns: 1fr; }
+      .pricing-grid { grid-template-columns: 1fr; }
+      footer .container { flex-direction: column; align-items: center; text-align: center; }
+      footer .footer-brand p { max-width: 100%; }
+      footer .footer-cta { text-align: center; width: 100%; }
+      footer .footer-bottom { flex-direction: column; align-items: center; }
+    }
+  </style>
 </head>
-
 <body>
-  <!-- Theme Toggle Button -->
-  <button class="btn btn-outline-secondary theme-toggle-btn" id="theme-toggle" onclick="toggleTheme()"
-    title="Toggle dark/light mode">
-    🌙
-  </button>
-  <div class="container">
-    <div class="row justify-content-center">
-      <div class="col-lg-6 col-md-6 col-sm-8">
-        <div class="border border-dotted border-3 rounded-3 p-3 mb-4 bg-white bg-opacity-50">
-          <h4 class="text-center group-header mb-0">VUNA CALCULATOR</h4>
-          <p class="text-center text-small text-muted">
-            <i>Created by set 2025/26 Software Engineering</i>
-          </p>
+
+  <!-- Nav -->
+  <nav>
+    <div class="logo">
+      <svg viewBox="0 0 32 32" fill="none">
+        <rect x="2" y="2" width="28" height="28" rx="6" stroke="currentColor" stroke-width="2" />
+        <path d="M10 16h12M16 10v12" stroke="#00FF94" stroke-width="2.5" stroke-linecap="round" />
+      </svg>
+      Stack<span>form</span>
+    </div>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#how">How it works</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="calculator/">Calculator</a></li>
+      <li><a href="#cta" class="nav-cta">Start for Free</a></li>
+    </ul>
+    <button class="nav-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')">☰</button>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-badge">
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="3" fill="currentColor"/></svg>
+      v1.0 launched — 100% free tier available
+    </div>
+    <h1>Internal admin panels<br />from a single <em>YAML file</em></h1>
+    <p>Stackform turns a 10-line config into a fully functional admin dashboard. No React, no boilerplate, no backend glue. Built for solo founders who ship fast.</p>
+    <div class="hero-actions">
+      <button class="btn-primary" onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})">Start for Free</button>
+      <button class="btn-secondary" onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'})">See how it works</button>
+    </div>
+    <div class="code-block">
+      <span class="filename">dashboard.yaml</span>
+      <pre><code><span class="token-comment"># admin/dashboard.yaml</span>
+<span class="token-key">pages</span>:
+  <span class="token-key">- title</span>: <span class="token-string">Users</span>
+    <span class="token-key">table</span>:
+      <span class="token-key">source</span>: <span class="token-string">postgres:///app</span>
+      <span class="token-key">query</span>: <span class="token-string">SELECT id, name, email, plan, created_at FROM users</span>
+      <span class="token-key">filters</span>: <span class="token-boolean">true</span>
+      <span class="token-key">editable</span>: <span class="token-boolean">true</span>
+
+  <span class="token-key">- title</span>: <span class="token-string">Orders</span>
+    <span class="token-key">table</span>:
+      <span class="token-key">source</span>: <span class="token-string">postgres:///app</span>
+      <span class="token-key">query</span>: <span class="token-string">SELECT * FROM orders ORDER BY created_at DESC</span>
+      <span class="token-key">export</span>: <span class="token-boolean">true</span></code></pre>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section id="how">
+    <div class="container">
+      <div class="section-label">How it works</div>
+      <h2 class="section-title">Three steps to your first internal tool</h2>
+      <p class="section-sub">Write a config file, see it live instantly, then share it with your team. No deploy pipeline required.</p>
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-number">01</div>
+          <h3>Write your YAML config</h3>
+          <p>Define tables, forms, and data sources in a single YAML file. Connect to Postgres, MySQL, or REST APIs.</p>
+          <span class="step-arrow">→</span>
         </div>
-        <div class="row">
-          <div class="col-md-12">
-            <div class="card calculator-card">
-              <div class="card-body p-4">
-                <div class="calculator">
-                  <div class="display-container">
-                    <input type="text" class="form-control" id="result" placeholder="0" disabled />
-                  </div>
-
-                  <div class="btn-grid">
-                    <button class="btn btn-light" onclick="bracketToResult('(')">(</button>
-                    <button class="btn btn-light" onclick="bracketToResult(')')">)</button>
-                    <button class="btn btn-light" onclick="backspace()">←</button>
-
-                    <!-- Row trig -->
-                    <button class="btn btn-action" onclick="clearResult()">AC</button>
-
-                    <!-- Row 2 -->
-                    <button class="btn btn-light" onclick="appendToResult(7)">7</button>
-                    <button class="btn btn-light" onclick="appendToResult(8)">8</button>
-                    <button class="btn btn-light" onclick="appendToResult(9)">9</button>
-
-                    <!-- Row 3 -->
-                    <button class="btn btn-operator" onclick="operatorToResult('/')">÷</button>
-                    <button class="btn btn-light" onclick="appendToResult(4)">4</button>
-                    <button class="btn btn-light" onclick="appendToResult(5)">5</button>
-                    <button class="btn btn-light" onclick="appendToResult(6)">6</button>
-
-                    <!-- Row 4 -->
-                    <button class="btn btn-operator" onclick="operatorToResult('*')">×</button>
-                    <button class="btn btn-light" onclick="appendToResult(1)">1</button>
-                    <button class="btn btn-light" onclick="appendToResult(2)">2</button>
-                    <button class="btn btn-light" onclick="appendToResult(3)">3</button>
-
-                    <!-- Row 5 -->
-                    <button class="btn btn-operator" onclick="operatorToResult('+')">+</button>
-                    <button class="btn btn-light" onclick="appendToResult('.')">.</button>
-                    <button class="btn btn-light" onclick="appendToResult(0)">0</button>
-                    <button class="btn btn-operator" onclick="percentToResult('%')">%</button>
-                    
-                    <!-- Row 9 -->
-                    <button class="btn btn-operator" onclick="operatorToResult('-')">−</button>
-
-                    <button class="btn btn-equals" onclick="calculateResult()" style="grid-column: span 4;">=</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <script src="assets/js/bootstrap.min.js"></script>
-          <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
-          <script src="assets/js/script.js"></script>
-          <button id="scroll-to-calculator" title="Back to Calculator">↑</button>
+        <div class="step-card">
+          <div class="step-number">02</div>
+          <h3>Preview in your browser</h3>
+          <p>Stackform parses the config and renders a live admin UI with sortable tables, filters, and inline editing.</p>
+          <span class="step-arrow">→</span>
+        </div>
+        <div class="step-card">
+          <div class="step-number">03</div>
+          <h3>Share with one link</h3>
+          <p>Deploy instantly behind your existing auth or Stackform's built-in access control. Your team gets a URL.</p>
         </div>
       </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section id="features">
+    <div class="container">
+      <div class="section-label">Features</div>
+      <h2 class="section-title">Everything you need, nothing you don't</h2>
+      <p class="section-sub">Built for the 80% of internal tools that are just CRUD + filters + exports.</p>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          </div>
+          <h3>One-file config</h3>
+          <p>Your entire admin panel lives in a single YAML file. Version control it, review it, ship it — just like the rest of your code.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+          </div>
+          <h3>Connect your database</h3>
+          <p>Built-in connectors for Postgres, MySQL, SQLite, and REST APIs. Just drop in your connection string and write a query.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </div>
+          <h3>Inline editing & forms</h3>
+          <p>Edit rows directly in the table or build custom forms for create/update flows. Stackform generates the UI from your schema.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <h3>Deploy in minutes</h3>
+          <p>Self-host with Docker or use Stackform Cloud. Either way you get auth, audit logs, CSV exports, and a public URL in under 5 minutes.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Comparison -->
+  <section id="comparison">
+    <div class="container">
+      <div class="section-label">Comparison</div>
+      <h2 class="section-title">Stackform vs the alternatives</h2>
+      <p class="section-sub">You don't need a full engineering team to ship an admin panel.</p>
+      <div class="comparison-table-wrap">
+        <table class="comparison-table">
+          <thead>
+            <tr><th></th><th>Stackform</th><th>Build it yourself</th><th>Retool</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Time to first admin page</td><td class="highlight">~10 minutes</td><td>2–5 days</td><td>1–2 hours</td></tr>
+            <tr><td>Lines of code</td><td class="highlight">~10 (YAML)</td><td>500+ (frontend + backend)</td><td>Visual drag & drop</td></tr>
+            <tr><td>Backend required</td><td class="check">No</td><td class="cross">Yes</td><td class="check">No</td></tr>
+            <tr><td>Self-hostable</td><td class="check">Yes</td><td>—</td><td class="cross">Enterprise only</td></tr>
+            <tr><td>Pricing for solo founder</td><td class="highlight">Free</td><td>Engineering time</td><td>$10+/month</td></tr>
+            <tr><td>What you need to know</td><td>YAML + SQL</td><td>React + Node.js + DB</td><td>Visual builder</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Testimonials -->
+  <section>
+    <div class="container">
+      <div class="section-label">Testimonials</div>
+      <h2 class="section-title">Real founders, real speed</h2>
+      <div class="testimonials-grid">
+        <div class="testimonial-card">
+          <div class="stars">★★★★★</div>
+          <blockquote>"I built my entire customer admin panel in one afternoon. The YAML config took me 15 minutes. Stackform replaced what would have been a 2-week detour into building a React CRUD app I didn't want to maintain."</blockquote>
+          <div class="author">
+            <div class="author-avatar">JM</div>
+            <div class="author-info">
+              <strong>Jake Morrison</strong>
+              <span>Founder, PayBridge</span>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="stars">★★★★★</div>
+          <blockquote>"We're a team of 3. I needed to give my ops person a way to view and filter orders without bugging engineering. Stackform took me 20 minutes to set up. She's been using it daily for 3 months with zero support requests."</blockquote>
+          <div class="author">
+            <div class="author-avatar">AT</div>
+            <div class="author-info">
+              <strong>Aiko Tanaka</strong>
+              <span>CTO, RouteMind</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section id="pricing">
+    <div class="container">
+      <div class="section-label">Pricing</div>
+      <h2 class="section-title">Free to start, cheap to scale</h2>
+      <p class="section-sub">No credit card required. The Free tier includes everything a solo founder needs.</p>
+      <div class="pricing-grid">
+        <div class="pricing-card">
+          <div class="plan-name">Free</div>
+          <div class="price">$0 <span>/month</span></div>
+          <div class="price-desc">For solo founders and side projects</div>
+          <ul>
+            <li>Up to 3 data sources</li>
+            <li>Up to 5 pages</li>
+            <li>CSV export</li>
+            <li>Community support</li>
+            <li>Self-hosted or cloud</li>
+          </ul>
+          <button class="btn-primary" onclick="alert('Sign-up flow goes here')">Start for Free</button>
+        </div>
+        <div class="pricing-card featured">
+          <div class="plan-name">Pro</div>
+          <div class="price">$29 <span>/month</span></div>
+          <div class="price-desc">For small teams shipping fast</div>
+          <ul>
+            <li>Unlimited data sources</li>
+            <li>Unlimited pages</li>
+            <li>Custom actions & webhooks</li>
+            <li>Role-based access control</li>
+            <li>Audit logs</li>
+            <li>Priority support</li>
+          </ul>
+          <button class="btn-primary" onclick="alert('Pro sign-up flow goes here')">Try Pro free for 14 days</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-brand">
+        <div class="logo">
+          <svg viewBox="0 0 32 32" fill="none" width="24" height="24">
+            <rect x="2" y="2" width="28" height="28" rx="6" stroke="currentColor" stroke-width="2" />
+            <path d="M10 16h12M16 10v12" stroke="#00FF94" stroke-width="2.5" stroke-linecap="round" />
+          </svg>
+          Stack<span>form</span>
+        </div>
+        <p>Internal admin panels from a single YAML file. Built for founders who'd rather build their product than a CRUD app.</p>
+      </div>
+      <div class="footer-links">
+        <div class="col">
+          <strong>Product</strong>
+          <a href="#features">Features</a>
+          <a href="#pricing">Pricing</a>
+          <a href="#how">How it works</a>
+          <a href="calculator/">Calculator</a>
+        </div>
+        <div class="col">
+          <strong>Resources</strong>
+          <a href="#">Documentation</a>
+          <a href="#">API reference</a>
+          <a href="#">GitHub</a>
+          <a href="#">Status</a>
+        </div>
+        <div class="col">
+          <strong>Company</strong>
+          <a href="#">Blog</a>
+          <a href="#">Twitter</a>
+          <a href="#">Contact</a>
+        </div>
+      </div>
+      <div class="footer-cta">
+        <button class="btn-primary" onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})">Start for Free</button>
+      </div>
+      <div class="footer-bottom">
+        <span>&copy; 2026 Stackform. All rights reserved.</span>
+        <span>Built for solo founders who ship.</span>
+      </div>
+    </div>
+  </footer>
+
 </body>
-
 </html>
-
