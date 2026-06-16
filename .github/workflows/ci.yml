@@ -48,11 +48,11 @@ jobs:
           exclude: |
             .git/**
             .gitignore
-            .github/**
+            .github
             .dockerignore
-            node_modules/**
-            coverage/**
-            test/**
+            node_modules
+            coverage
+            test
             package.json
             package-lock.json
             jest.config.js
