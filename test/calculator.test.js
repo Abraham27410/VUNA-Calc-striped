@@ -162,3 +162,50 @@ describe('Calculator Edge Cases', () => {
     expect(calculateExpression('abs(-5)')).toBe(5);
   });
 });
+
+describe('Calculus Functions', () => {
+  test('derivative of x^2 at x=3 should be ~6', () => {
+    var result = calculateExpression('deriv(x**2,x,3)', 0);
+    expect(Math.abs(result - 6)).toBeLessThan(1e-5);
+  });
+
+  test('derivative of x^3 at x=2 should be ~12', () => {
+    var result = calculateExpression('deriv(x**3,x,2)', 0);
+    expect(Math.abs(result - 12)).toBeLessThan(1e-5);
+  });
+
+  test('derivative of exp(x) at x=0 should be ~1', () => {
+    var result = calculateExpression('deriv(exp(x),x,0)', 0);
+    expect(Math.abs(result - 1)).toBeLessThan(1e-4);
+  });
+
+  test('derivative of constant 5 should be ~0', () => {
+    var result = calculateExpression('deriv(5,x,3)', 0);
+    expect(Math.abs(result)).toBeLessThan(1e-5);
+  });
+
+  test('derivative in degree mode: d/dx sin(x) at 0 = pi/180', () => {
+    var result = calculateExpression('deriv(sin(x),x,0)', 0);
+    expect(Math.abs(result - Math.PI / 180)).toBeLessThan(1e-5);
+  });
+
+  test('integral of x from 0 to 1 should be ~0.5', () => {
+    var result = calculateExpression('integral(x,x,0,1)', 0);
+    expect(Math.abs(result - 0.5)).toBeLessThan(1e-3);
+  });
+
+  test('integral of x^2 from 0 to 1 should be ~1/3', () => {
+    var result = calculateExpression('integral(x**2,x,0,1)', 0);
+    expect(Math.abs(result - 1 / 3)).toBeLessThan(1e-3);
+  });
+
+  test('integral of constant 2 from 0 to 3 should be ~6', () => {
+    var result = calculateExpression('integral(2,x,0,3)', 0);
+    expect(Math.abs(result - 6)).toBeLessThan(1e-3);
+  });
+
+  test('integral of x^3 from 0 to 2 should be ~4', () => {
+    var result = calculateExpression('integral(x**3,x,0,2)', 0);
+    expect(Math.abs(result - 4)).toBeLessThan(1e-3);
+  });
+});

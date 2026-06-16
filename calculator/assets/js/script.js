@@ -1,5 +1,25 @@
 let LAST_RESULT = 0;
 var currentExpression = "";
+var KNOWN_FUNCTIONS = new Set([
+  "sinDeg",
+  "cosDeg",
+  "tanDeg",
+  "asinDeg",
+  "acosDeg",
+  "atanDeg",
+  "sinh",
+  "asinh",
+  "sqrt",
+  "log",
+  "ln",
+  "exp",
+  "abs",
+  "ceil",
+  "floor",
+  "round",
+  "deriv",
+  "integral",
+]);
 
 function toggleTheme() {
   const body = document.body;
@@ -133,8 +153,10 @@ function tokenize(expr) {
         tokens.push({ type: "NUMBER", value: Math.E });
       } else if (ident === "Math.PI") {
         tokens.push({ type: "NUMBER", value: Math.PI });
-      } else {
+      } else if (KNOWN_FUNCTIONS.has(ident)) {
         tokens.push({ type: "FUNCTION", value: ident });
+      } else {
+        tokens.push({ type: "VARIABLE", value: ident });
       }
       continue;
     }
@@ -145,6 +167,11 @@ function tokenize(expr) {
     }
     if ("+-*/%".indexOf(ch) !== -1) {
       tokens.push({ type: "OPERATOR", value: ch });
+      i++;
+      continue;
+    }
+    if (ch === ",") {
+      tokens.push({ type: "COMMA" });
       i++;
       continue;
     }
@@ -203,8 +230,37 @@ function applyFunction(name, arg) {
   }
 }
 
-function parseExpression(tokens) {
+function evaluateDerivative(exprTokens, varName, point) {
+  var h = 1e-8;
+  var varsPlus = {};
+  varsPlus[varName] = point + h;
+  var f_plus = parseExpression(exprTokens, varsPlus);
+  var varsMinus = {};
+  varsMinus[varName] = point - h;
+  var f_minus = parseExpression(exprTokens, varsMinus);
+  return (f_plus - f_minus) / (2 * h);
+}
+
+function evaluateIntegral(exprTokens, varName, a, b) {
+  var n = 1000;
+  var h = (b - a) / n;
+  var vars = {};
+  var sum = 0;
+  vars[varName] = a;
+  sum += parseExpression(exprTokens, vars);
+  vars[varName] = b;
+  sum += parseExpression(exprTokens, vars);
+  for (var i = 1; i < n; i++) {
+    vars[varName] = a + i * h;
+    var val = parseExpression(exprTokens, vars);
+    sum += (i % 2 === 1 ? 4 : 2) * val;
+  }
+  return (sum * h) / 3;
+}
+
+function parseExpression(tokens, varValues) {
   var pos = 0;
+  var vars = varValues || {};
   function peek() {
     return tokens[pos] || null;
   }
@@ -216,12 +272,35 @@ function parseExpression(tokens) {
     if (!token || token.type !== type) throw new Error("Expected " + type);
     return token;
   }
+  function collectTokensUntilComma() {
+    var collected = [];
+    var depth = 0;
+    while (pos < tokens.length) {
+      var t = tokens[pos];
+      if (t.type === "LPAREN") depth++;
+      if (t.type === "RPAREN") {
+        if (depth === 0) break;
+        depth--;
+      }
+      if (depth === 0 && t.type === "COMMA") break;
+      collected.push(t);
+      pos++;
+    }
+    return collected;
+  }
   function parsePrimary() {
     var token = peek();
     if (!token) throw new Error("Unexpected end");
     if (token.type === "NUMBER") {
       consume();
       return token.value;
+    }
+    if (token.type === "VARIABLE") {
+      consume();
+      if (token.value in vars) {
+        return vars[token.value];
+      }
+      throw new Error("Unknown variable: " + token.value);
     }
     if (token.type === "LPAREN") {
       consume();
@@ -232,6 +311,34 @@ function parseExpression(tokens) {
     if (token.type === "FUNCTION") {
       var name = consume().value;
       expect("LPAREN");
+      if (name === "deriv") {
+        var exprTokens = collectTokensUntilComma();
+        expect("COMMA");
+        var varToken = peek();
+        if (!varToken || varToken.type !== "VARIABLE")
+          throw new Error("Expected variable name");
+        consume();
+        var varName = varToken.value;
+        expect("COMMA");
+        var point = parseBinOp();
+        expect("RPAREN");
+        return evaluateDerivative(exprTokens, varName, point);
+      }
+      if (name === "integral") {
+        exprTokens = collectTokensUntilComma();
+        expect("COMMA");
+        varToken = peek();
+        if (!varToken || varToken.type !== "VARIABLE")
+          throw new Error("Expected variable name");
+        consume();
+        varName = varToken.value;
+        expect("COMMA");
+        var a = parseBinOp();
+        expect("COMMA");
+        var b = parseBinOp();
+        expect("RPAREN");
+        return evaluateIntegral(exprTokens, varName, a, b);
+      }
       var arg = parseBinOp();
       expect("RPAREN");
       return applyFunction(name, arg);
@@ -328,18 +435,20 @@ function percentToResult() {
   updateResult();
 }
 
-function calculateExpression(expression, lastResult) {
+function calculateExpression(expression, lastResult, vars) {
   try {
     var normalizedExpression = normalizeExpression(expression);
 
-    normalizedExpression = normalizedExpression.replace(
-      /\bans\b/gi,
-      lastResult,
-    );
+    if (lastResult !== undefined && lastResult !== null) {
+      normalizedExpression = normalizedExpression.replace(
+        /\bans\b/gi,
+        lastResult,
+      );
+    }
 
     var tokens = tokenize(normalizedExpression);
     if (tokens.length === 0) throw new Error();
-    var result = parseExpression(tokens);
+    var result = parseExpression(tokens, vars);
 
     if (isNaN(result) || !isFinite(result)) {
       throw new Error();
@@ -382,6 +491,8 @@ if (typeof module !== "undefined" && module.exports) {
     percentToResult,
     calculateResult,
     updateResult,
+    evaluateDerivative,
+    evaluateIntegral,
     left,
     operator,
     right,
