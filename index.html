@@ -3,772 +3,975 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Stackform — Internal tools from a single YAML file</title>
+  <title>Abraham Sangari — SEN 482 CI/CD Platform</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     :root {
-      --temp:#0000;
-      --bg-primary: #0f0f1a;
-      --bg-secondary: #18182b;
-      --bg-card: #1e1e35;
-      --bg-code: #14142a;
-      --border: #2a2a4a;
-      --text-primary: #e8e8f0;
-      --text-secondary: #9494b8;
-      --text-muted: #6b6b8d;
-      --accent: #00FF94;
-      --accent-dim: rgba(0, 255, 148, 0.15);
-      --accent-glow: rgba(0, 255, 148, 0.35);
-      --danger: #ff5e7a;
-      --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      --font-code: 'Fira Code', 'JetBrains Mono', 'Cascadia Code', monospace;
-      --radius: 12px;
-      --radius-sm: 8px;
-    }
-    html { scroll-behavior: smooth; }
-    body {
-      font-family: var(--font-body);
-      background: var(--bg-primary);
-      color: var(--text-primary);
-      line-height: 1.6;
-      -webkit-font-smoothing: antialiased;
-    }
-    a { color: var(--accent); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    img, svg { display: block; max-width: 100%; }
-    .container {
-      max-width: 1120px;
-      margin: 0 auto;
-      padding: 0 24px;
+      --ink:        #335e9e;
+      --paper:      #ffffff;
+      --indigo:     #595460;
+      --indigo-lt:  #a78bfa;
+      --cyan:       #404646;
+      --green:      #00ff87;
+      --orange:     #ff6b35;
+      --pink:       #f72585;
+      --yellow:     #ffd60a;
+      --violet:     #9b5de5;
+      --glass:      rgba(255,255,255,0.07);
+      --stroke:     rgba(255,255,255,0.15);
     }
 
-    /* --- Nav --- */
-    nav {
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      background: var(--ink);
+      background-image: radial-gradient(ellipse 80% 50% at 20% 10%, rgba(124,58,237,0.18) 0%, transparent 60%),
+                        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(0,229,255,0.12) 0%, transparent 60%);
+      color: var(--paper);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── CANVAS ── */
+    #canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* ── GRID OVERLAY ── */
+    .grid-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(99,102,241,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(99,102,241,0.04) 1px, transparent 1px);
+      background-size: 48px 48px;
+      mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, black 40%, transparent 100%);
+    }
+
+    /* ── SCAN LINE ── */
+    .scan-line {
+      position: fixed;
+      left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+      opacity: 0;
+      z-index: 2;
+      pointer-events: none;
+      animation: scan 8s linear infinite;
+    }
+    @keyframes scan {
+      0%   { top: -2px; opacity: 0; }
+      5%   { opacity: 0.6; }
+      95%  { opacity: 0.6; }
+      100% { top: 100vh; opacity: 0; }
+    }
+
+    /* ── LAYOUT ── */
+    .page {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 0 24px 80px;
+    }
+
+    /* ── TOP NAV BAR ── */
+    .nav {
+      width: 100%;
+      max-width: 960px;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 18px 24px;
-      max-width: 1120px;
-      margin: 0 auto;
+      padding: 28px 0 0;
     }
-    .logo {
-      font-weight: 800;
-      font-size: 1.35rem;
-      letter-spacing: -0.5px;
+    .nav-logo {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--cyan);
+      letter-spacing: 0.08em;
+      text-shadow: 0 0 12px rgba(0,229,255,0.5);
+    }
+    .nav-pill {
       display: flex;
       align-items: center;
       gap: 8px;
-      color: var(--text-primary);
+      background: rgba(0,255,135,0.1);
+      border: 1px solid rgba(0,255,135,0.4);
+      border-radius: 100px;
+      padding: 7px 14px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: var(--green);
+      letter-spacing: 0.06em;
+      text-shadow: 0 0 8px rgba(0,255,135,0.6);
     }
-    .logo svg { width: 28px; height: 28px; }
-    .logo span { color: var(--accent); }
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: 28px;
-      list-style: none;
+    .nav-pill::before {
+      content: "";
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 10px var(--green);
+      animation: pulse-dot 2s infinite;
     }
-    .nav-links a {
-      color: var(--text-secondary);
-      font-size: 0.9rem;
-      font-weight: 500;
-      transition: color .2s;
+    @keyframes pulse-dot {
+      0%,100% { opacity:1; transform:scale(1); }
+      50%      { opacity:0.5; transform:scale(0.8); }
     }
-    .nav-links a:hover { color: var(--text-primary); text-decoration: none; }
-    .nav-cta {
-      background: var(--accent);
-      color: #0f0f1a !important;
-      padding: 8px 20px;
-      border-radius: 6px;
-      font-weight: 600;
-      font-size: 0.85rem;
-      transition: box-shadow .2s;
-    }
-    .nav-cta:hover { box-shadow: 0 0 20px var(--accent-glow); text-decoration: none !important; }
-    .nav-toggle { display: none; background: none; border: none; color: var(--text-primary); font-size: 1.5rem; cursor: pointer; }
 
-    /* --- Hero --- */
+    /* ── HERO ── */
     .hero {
-      text-align: center;
-      padding: 80px 24px 60px;
-    }
-    .hero-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: var(--accent-dim);
-      color: var(--accent);
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 0.8rem;
-      font-weight: 600;
-      margin-bottom: 24px;
-      border: 1px solid rgba(0,255,148,0.2);
-    }
-    .hero h1 {
-      font-size: clamp(2.4rem, 6vw, 4rem);
-      font-weight: 800;
-      line-height: 1.1;
-      letter-spacing: -1.5px;
-      max-width: 780px;
-      margin: 0 auto 18px;
-    }
-    .hero h1 em { font-style: normal; color: var(--accent); }
-    .hero p {
-      font-size: 1.15rem;
-      color: var(--text-secondary);
-      max-width: 600px;
-      margin: 0 auto 36px;
-      line-height: 1.7;
-    }
-    .hero-actions {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-      flex-wrap: wrap;
-      margin-bottom: 48px;
-    }
-    .btn-primary {
-      background: var(--accent);
-      color: #0f0f1a;
-      border: none;
-      padding: 14px 36px;
-      border-radius: var(--radius-sm);
-      font-weight: 700;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: box-shadow .25s, transform .2s;
-      font-family: var(--font-body);
-    }
-    .btn-primary:hover { box-shadow: 0 0 30px var(--accent-glow); transform: translateY(-2px); }
-    .btn-secondary {
-      background: transparent;
-      color: var(--text-primary);
-      border: 1px solid var(--border);
-      padding: 14px 36px;
-      border-radius: var(--radius-sm);
-      font-weight: 600;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: border-color .2s, transform .2s;
-      font-family: var(--font-body);
-    }
-    .btn-secondary:hover { border-color: var(--text-secondary); transform: translateY(-2px); }
-
-    /* Code block */
-    .code-block {
-      background: var(--bg-code);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 24px 28px;
-      text-align: left;
-      max-width: 680px;
-      margin: 0 auto;
-      position: relative;
-      overflow-x: auto;
-    }
-    .code-block .filename {
-      position: absolute;
-      top: 12px;
-      right: 16px;
-      font-size: 0.7rem;
-      color: var(--text-muted);
-      font-family: var(--font-code);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .code-block pre {
-      font-family: var(--font-code);
-      font-size: 0.85rem;
-      line-height: 1.65;
-      color: var(--text-primary);
-      white-space: pre;
-    }
-    .code-block code { font-family: var(--font-code); }
-    .token-key { color: #7ec8f0; }
-    .token-string { color: #a8e6a8; }
-    .token-number { color: #f5a97f; }
-    .token-boolean { color: #f5a97f; }
-    .token-comment { color: #6b6b8d; font-style: italic; }
-    .token-punctuation { color: var(--text-secondary); }
-    .token-table { color: #c9a0ff; }
-
-    /* --- Section shared --- */
-    section { padding: 80px 0; }
-    .section-label {
-      text-transform: uppercase;
-      font-size: 0.75rem;
-      letter-spacing: 2px;
-      color: var(--accent);
-      font-weight: 600;
-      margin-bottom: 12px;
-    }
-    .section-title {
-      font-size: clamp(1.8rem, 4vw, 2.6rem);
-      font-weight: 700;
-      letter-spacing: -0.5px;
-      margin-bottom: 16px;
-    }
-    .section-sub {
-      color: var(--text-secondary);
-      max-width: 560px;
-      font-size: 1.05rem;
-      line-height: 1.7;
-    }
-
-    /* --- How It Works --- */
-    .steps-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 28px;
-      margin-top: 48px;
-    }
-    .step-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 32px 28px;
-      position: relative;
-      transition: border-color .2s;
-    }
-    .step-card:hover { border-color: var(--accent); }
-    .step-number {
-      font-family: var(--font-code);
-      font-size: 2.2rem;
-      font-weight: 700;
-      color: var(--accent);
-      opacity: 0.35;
-      line-height: 1;
-      margin-bottom: 16px;
-    }
-    .step-card h3 { font-size: 1.15rem; font-weight: 700; margin-bottom: 8px; }
-    .step-card p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; }
-    .step-arrow {
-      position: absolute;
-      top: 32px;
-      right: -20px;
-      color: var(--text-muted);
-      font-size: 1.2rem;
-    }
-    .steps-grid .step-card:last-child .step-arrow { display: none; }
-
-    /* --- Features --- */
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 24px;
-      margin-top: 48px;
-    }
-    .feature-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 32px 28px;
-      transition: border-color .2s;
-    }
-    .feature-card:hover { border-color: var(--accent); }
-    .feature-icon {
-      width: 44px;
-      height: 44px;
-      background: var(--accent-dim);
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 18px;
-      color: var(--accent);
-    }
-    .feature-icon svg { width: 22px; height: 22px; }
-    .feature-card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 6px; }
-    .feature-card p { font-size: 0.88rem; color: var(--text-secondary); line-height: 1.65; }
-
-    /* --- Comparison --- */
-    .comparison-table-wrap {
-      overflow-x: auto;
-      margin-top: 48px;
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-    }
-    .comparison-table {
       width: 100%;
-      border-collapse: collapse;
-      min-width: 600px;
+      max-width: 960px;
+      margin-top: 72px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 0;
     }
-    .comparison-table th, .comparison-table td {
-      padding: 16px 20px;
-      text-align: left;
-      font-size: 0.9rem;
-      border-bottom: 1px solid var(--border);
-    }
-    .comparison-table th {
-      background: var(--bg-card);
-      font-weight: 700;
-      font-size: 0.85rem;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--text-secondary);
-    }
-    .comparison-table th:first-child { color: var(--text-primary); }
-    .comparison-table td:first-child { font-weight: 600; color: var(--text-secondary); }
-    .comparison-table tr:last-child td { border-bottom: none; }
-    .comparison-table .highlight { color: var(--accent); font-weight: 600; }
-    .comparison-table .check { color: var(--accent); }
-    .comparison-table .cross { color: var(--danger); }
-    .comparison-table tr:hover td { background: rgba(255,255,255,0.02); }
 
-    /* --- Testimonials --- */
-    .testimonials-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 24px;
-      margin-top: 48px;
-    }
-    .testimonial-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 32px 28px;
-    }
-    .testimonial-card .stars { color: var(--accent); font-size: 1rem; margin-bottom: 12px; letter-spacing: 2px; }
-    .testimonial-card blockquote {
-      font-size: 0.95rem;
-      line-height: 1.7;
-      color: var(--text-primary);
-      margin-bottom: 20px;
-      font-style: italic;
-    }
-    .testimonial-card .author {
+    .eyebrow {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      letter-spacing: 0.18em;
+      color: var(--cyan);
+      text-transform: uppercase;
+      margin-bottom: 24px;
       display: flex;
       align-items: center;
       gap: 12px;
+      text-shadow: 0 0 10px rgba(0,229,255,0.5);
     }
-    .testimonial-card .author-avatar {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      background: var(--accent-dim);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 0.9rem;
-      color: var(--accent);
+    .eyebrow::before, .eyebrow::after {
+      content:"";
+      display: block;
+      width: 40px; height: 1px;
+      background: linear-gradient(90deg, transparent, var(--cyan));
     }
-    .testimonial-card .author-info strong { font-size: 0.9rem; display: block; }
-    .testimonial-card .author-info span { font-size: 0.8rem; color: var(--text-muted); }
+    .eyebrow::after { transform: rotate(180deg); }
 
-    /* --- Pricing --- */
-    .pricing-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 28px;
-      margin-top: 48px;
+    .hero-headline {
+      font-size: clamp(44px, 8vw, 88px);
+      font-weight: 700;
+      line-height: 1.0;
+      letter-spacing: -0.035em;
+      background: linear-gradient(160deg, #ffffff 10%, var(--green) 45%, var(--cyan) 75%, var(--indigo-lt) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+    .hero-headline span {
+      display: block;
+      font-size: clamp(20px, 3.5vw, 36px);
+      font-weight: 300;
+      letter-spacing: -0.01em;
+      background: linear-gradient(90deg, #e2e8f0, var(--indigo-lt));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-top: 12px;
+    }
+
+    .hero-sub {
+      max-width: 560px;
+      margin: 32px auto 0;
+      font-size: 16px;
+      line-height: 1.7;
+      color: #94a3b8;
+      font-weight: 400;
+    }
+
+    /* ── METRICS ROW ── */
+    .metrics {
+      display: flex;
+      gap: 1px;
+      margin-top: 56px;
+      width: 100%;
       max-width: 720px;
-      margin-left: auto;
-      margin-right: auto;
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.2);
     }
-    .pricing-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 36px 32px;
-      position: relative;
-      transition: border-color .2s;
+    .metric {
+      flex: 1;
+      background: rgba(255,255,255,0.06);
+      backdrop-filter: blur(12px);
+      padding: 22px 16px;
+      text-align: center;
+      border-right: 1px solid rgba(255,255,255,0.1);
+      transition: background 0.2s;
     }
-    .pricing-card.featured {
-      border-color: var(--accent);
-      background: linear-gradient(135deg, var(--bg-card) 0%, rgba(0,255,148,0.05) 100%);
+    .metric:last-child { border-right: none; }
+    .metric:nth-child(1):hover { background: rgba(0,255,135,0.1); }
+    .metric:nth-child(2):hover { background: rgba(0,229,255,0.1); }
+    .metric:nth-child(3):hover { background: rgba(167,139,250,0.1); }
+    .metric:nth-child(4):hover { background: rgba(247,37,133,0.1); }
+    .metric-value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 28px;
+      font-weight: 500;
+      display: block;
+      line-height: 1;
     }
-    .pricing-card.featured::before {
-      content: 'Most popular';
-      position: absolute;
-      top: -12px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--accent);
-      color: #0f0f1a;
-      font-size: 0.7rem;
-      font-weight: 700;
+    .metric:nth-child(1) .metric-value { color: var(--green);  text-shadow: 0 0 16px rgba(0,255,135,0.6); }
+    .metric:nth-child(2) .metric-value { color: var(--cyan);   text-shadow: 0 0 16px rgba(0,229,255,0.6); }
+    .metric:nth-child(3) .metric-value { color: var(--indigo-lt); text-shadow: 0 0 16px rgba(167,139,250,0.6); }
+    .metric:nth-child(4) .metric-value { color: var(--pink);   text-shadow: 0 0 16px rgba(247,37,133,0.6); }
+    .metric-label {
+      font-size: 11px;
+      color: #94a3b8;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
-      letter-spacing: 1px;
-      padding: 4px 16px;
-      border-radius: 4px;
+      margin-top: 6px;
+      display: block;
     }
-    .pricing-card .plan-name { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted); margin-bottom: 8px; }
-    .pricing-card .price { font-size: 2.4rem; font-weight: 800; letter-spacing: -1px; margin-bottom: 4px; }
-    .pricing-card .price span { font-size: 1rem; font-weight: 500; color: var(--text-muted); }
-    .pricing-card .price-desc { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 24px; }
-    .pricing-card ul { list-style: none; margin-bottom: 28px; }
-    .pricing-card ul li {
-      padding: 6px 0;
-      font-size: 0.88rem;
-      color: var(--text-secondary);
+
+    /* ── PIPELINE VISUAL ── */
+    .pipeline-section {
+      width: 100%;
+      max-width: 960px;
+      margin-top: 72px;
+    }
+    .section-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #94a3b8;
+      margin-bottom: 20px;
+    }
+    .pipeline {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 16px;
+      overflow: hidden;
+      padding: 24px 28px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .pipe-step {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .pipe-box {
       display: flex;
       align-items: center;
       gap: 8px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      color: #e2e8f0;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s, color 0.3s, background 0.3s;
+      cursor: default;
     }
-    .pricing-card ul li::before { content: '✓'; color: var(--accent); font-weight: 700; }
-    .pricing-card .btn-primary,
-    .pricing-card .btn-secondary {
-      width: 100%;
-      text-align: center;
-      display: block;
-      padding: 12px;
-      font-size: 0.9rem;
+    .pipe-box::before {
+      content:"";
+      position:absolute;
+      inset:0;
+      background: linear-gradient(135deg, transparent 60%, rgba(0,229,255,0.1));
+      opacity:0;
+      transition: opacity 0.3s;
     }
-    .pricing-card .btn-secondary {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--text-primary);
-      border-radius: var(--radius-sm);
-      font-weight: 600;
-      font-family: var(--font-body);
-      cursor: pointer;
-      transition: border-color .2s;
-      text-align: center;
-      display: block;
+    .pipe-box:hover { border-color: var(--cyan); color: var(--cyan); background: rgba(0,229,255,0.08); }
+    .pipe-box:hover::before { opacity:1; }
+    .pipe-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
     }
-    .pricing-card .btn-secondary:hover { border-color: var(--text-secondary); }
+    .dot-green  { background: var(--green);  box-shadow: 0 0 8px var(--green); }
+    .dot-blue   { background: #60a5fa;       box-shadow: 0 0 8px #60a5fa; }
+    .dot-violet { background: var(--indigo-lt); box-shadow: 0 0 8px var(--indigo-lt); }
+    .dot-cyan   { background: var(--cyan);   box-shadow: 0 0 8px var(--cyan); }
+    .dot-amber  { background: var(--yellow); box-shadow: 0 0 8px var(--yellow); }
+    .pipe-arrow {
+      color: #64748b;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
 
-    /* --- Footer --- */
-    footer {
-      border-top: 1px solid var(--border);
-      padding: 48px 24px 32px;
-    }
-    footer .container {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 32px;
-    }
-    footer .footer-brand .logo { margin-bottom: 8px; }
-    footer .footer-brand p {
-      font-size: 0.82rem;
-      color: var(--text-muted);
-      max-width: 260px;
-      line-height: 1.6;
-    }
-    footer .footer-links {
-      display: flex;
-      gap: 48px;
-      flex-wrap: wrap;
-    }
-    footer .footer-links .col strong {
-      display: block;
-      font-size: 0.8rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: var(--text-muted);
-      margin-bottom: 12px;
-    }
-    footer .footer-links .col a {
-      display: block;
-      font-size: 0.88rem;
-      color: var(--text-secondary);
-      padding: 4px 0;
-      transition: color .2s;
-    }
-    footer .footer-links .col a:hover { color: var(--text-primary); text-decoration: none; }
-    footer .footer-cta {
-      text-align: right;
-    }
-    footer .footer-cta .btn-primary {
-      padding: 10px 28px;
-      font-size: 0.85rem;
-    }
-    footer .footer-bottom {
+    /* animated pipeline progress bar */
+    .pipe-progress {
+      height: 2px;
+      background: linear-gradient(90deg, var(--indigo), var(--cyan));
+      margin-top: 14px;
+      border-radius: 2px;
+      animation: progress-pulse 3s ease-in-out infinite;
       width: 100%;
-      margin-top: 32px;
-      padding-top: 20px;
-      border-top: 1px solid var(--border);
+    }
+    @keyframes progress-pulse {
+      0%,100% { opacity: 0.4; }
+      50%      { opacity: 1; }
+    }
+
+    /* ── MAIN CARD ── */
+    .main-card {
+      margin-top: 72px;
+      width: 100%;
+      max-width: 960px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 28px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      overflow: hidden;
+      backdrop-filter: blur(20px);
+    }
+    .card-left {
+      padding: 48px;
+      border-right: 1px solid rgba(255,255,255,0.12);
+    }
+    .card-right {
+      padding: 48px;
       display: flex;
+      flex-direction: column;
       justify-content: space-between;
-      font-size: 0.78rem;
-      color: var(--text-muted);
+    }
+    .card-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      background: rgba(0,229,255,0.1);
+      border: 1px solid rgba(0,229,255,0.35);
+      border-radius: 6px;
+      padding: 4px 10px;
+      display: inline-block;
+      margin-bottom: 20px;
+      text-shadow: 0 0 8px rgba(0,229,255,0.4);
+    }
+    .card-title {
+      font-size: 26px;
+      font-weight: 600;
+      line-height: 1.25;
+      letter-spacing: -0.02em;
+      margin-bottom: 16px;
+      color: #ffffff;
+    }
+    .card-body {
+      font-size: 14px;
+      line-height: 1.75;
+      color: #94a3b8;
+    }
+
+    /* terminal block */
+    .terminal {
+      background: #080c10;
+      border: 1px solid rgba(0,229,255,0.2);
+      border-radius: 14px;
+      overflow: hidden;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      box-shadow: 0 0 24px rgba(0,229,255,0.06);
+    }
+    .terminal-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 16px;
+      background: rgba(255,255,255,0.04);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .tbar-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+    }
+    .tbar-title {
+      margin-left: 6px;
+      font-size: 11px;
+      color: #64748b;
+      letter-spacing: 0.04em;
+    }
+    .terminal-body {
+      padding: 18px 20px;
+      line-height: 1.8;
+      color: #94a3b8;
+    }
+    .t-line { display: flex; gap: 8px; }
+    .t-prompt { color: var(--green); flex-shrink:0; text-shadow: 0 0 6px rgba(0,255,135,0.5); }
+    .t-cmd    { color: #ffffff; }
+    .t-out    { color: #94a3b8; margin-left: 16px; }
+    .t-hi     { color: var(--cyan); text-shadow: 0 0 6px rgba(0,229,255,0.5); }
+    .t-cursor {
+      display: inline-block;
+      width: 8px; height: 14px;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: blink 1s step-start infinite;
+      vertical-align: middle;
+    }
+    @keyframes blink { 50% { opacity:0; } }
+
+    /* ── STACK TAGS ── */
+    .stack-row {
+      display: flex;
       flex-wrap: wrap;
       gap: 8px;
+      margin-top: 20px;
+    }
+    .stack-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      padding: 5px 12px;
+      border-radius: 8px;
+      border: 1px solid;
+      letter-spacing: 0.03em;
+      font-weight: 500;
+    }
+    .st-indigo { color: #c4b5fd; border-color: rgba(167,139,250,0.5); background: rgba(124,58,237,0.15); text-shadow: 0 0 8px rgba(167,139,250,0.4); }
+    .st-cyan   { color: #00e5ff; border-color: rgba(0,229,255,0.5);   background: rgba(0,229,255,0.1);  text-shadow: 0 0 8px rgba(0,229,255,0.4); }
+    .st-green  { color: #00ff87; border-color: rgba(0,255,135,0.5);   background: rgba(0,255,135,0.1);  text-shadow: 0 0 8px rgba(0,255,135,0.4); }
+    .st-amber  { color: #ffd60a; border-color: rgba(255,214,10,0.5);  background: rgba(255,214,10,0.1); text-shadow: 0 0 8px rgba(255,214,10,0.4); }
+    .st-violet { color: #f472b6; border-color: rgba(244,114,182,0.5); background: rgba(247,37,133,0.1); text-shadow: 0 0 8px rgba(244,114,182,0.4); }
+
+    /* ── COMMIT LOG ── */
+    .commit-log {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .commit {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      transition: background 0.2s;
+    }
+    .commit:hover { background: rgba(0,229,255,0.07); border-color: rgba(0,229,255,0.2); }
+    .commit-hash {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--cyan);
+      flex-shrink: 0;
+      text-shadow: 0 0 6px rgba(0,229,255,0.4);
+    }
+    .commit-msg {
+      font-size: 12px;
+      color: #cbd5e1;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .commit-time {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: #64748b;
+      flex-shrink:0;
+    }
+    .commit-status {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
     }
 
-    /* --- Mobile --- */
-    @media (max-width: 768px) {
-      .nav-links { display: none; }
-      .nav-toggle { display: block; }
-      .nav-links.open { display: flex; flex-direction: column; position: absolute; top: 60px; left: 0; right: 0; background: var(--bg-secondary); padding: 24px; border-bottom: 1px solid var(--border); gap: 16px; z-index: 10; }
-      nav { position: relative; }
-      .steps-grid { grid-template-columns: 1fr; }
-      .step-arrow { display: none; }
-      .features-grid { grid-template-columns: 1fr; }
-      .testimonials-grid { grid-template-columns: 1fr; }
-      .pricing-grid { grid-template-columns: 1fr; }
-      footer .container { flex-direction: column; align-items: center; text-align: center; }
-      footer .footer-brand p { max-width: 100%; }
-      footer .footer-cta { text-align: center; width: 100%; }
-      footer .footer-bottom { flex-direction: column; align-items: center; }
+    /* ── CTA ── */
+    .cta-section {
+      margin-top: 72px;
+      width: 100%;
+      max-width: 960px;
+      position: relative;
+      border-radius: 28px;
+      overflow: hidden;
+      background: linear-gradient(135deg, #130a2e, #0a1a30, #0d2a1a);
+      border: 1px solid rgba(0,229,255,0.25);
+    }
+    .cta-glow {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 60% 80% at 80% 50%, rgba(0,255,135,0.12), transparent 65%),
+                  radial-gradient(ellipse 40% 60% at 20% 50%, rgba(124,58,237,0.15), transparent 65%);
+      pointer-events:none;
+    }
+    .cta-inner {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 48px 52px;
+      gap: 40px;
+    }
+    .cta-text h2 {
+      font-size: 30px;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      line-height: 1.2;
+      margin-bottom: 12px;
+      color: #ffffff;
+    }
+    .cta-text p {
+      font-size: 14px;
+      color: #94a3b8;
+      line-height: 1.6;
+      max-width: 380px;
+    }
+    .cta-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+      text-decoration: none;
+      background: linear-gradient(135deg, var(--green), var(--cyan));
+      color: #0d1117;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      padding: 18px 36px;
+      border-radius: 14px;
+      letter-spacing: -0.01em;
+      transition: transform 0.25s, box-shadow 0.25s;
+      box-shadow: 0 8px 32px rgba(0,255,135,0.3);
+    }
+    .cta-btn:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 16px 48px rgba(0,255,135,0.5);
+    }
+    .cta-btn:active { transform: translateY(0) scale(1); }
+    .cta-icon {
+      width: 20px; height: 20px;
+      transition: transform 0.2s;
+    }
+    .cta-btn:hover .cta-icon { transform: translateX(4px); }
+
+    /* ── FOOTER ── */
+    .footer {
+      margin-top: 60px;
+      width: 100%;
+      max-width: 960px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid var(--stroke);
+      padding-top: 28px;
+    }
+    .footer-left {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: #64748b;
+      letter-spacing: 0.06em;
+    }
+    .footer-right {
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    /* ── MOBILE ── */
+    @media (max-width: 700px) {
+      .main-card { grid-template-columns: 1fr; }
+      .card-left { border-right: none; border-bottom: 1px solid var(--stroke); }
+      .cta-inner { flex-direction: column; text-align:center; align-items:center; }
+      .cta-text p { max-width: 100%; }
+      .pipeline { justify-content: center; }
+      .metrics { flex-direction: column; }
+      .metric { border-right:none; border-bottom:1px solid var(--stroke); }
+      .metric:last-child { border-bottom:none; }
+      .footer { flex-direction:column; gap:12px; text-align:center; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; transition: none !important; }
     }
   </style>
 </head>
 <body>
 
-  <!-- Nav -->
-  <nav>
-    <div class="logo">
-      <svg viewBox="0 0 32 32" fill="none">
-        <rect x="2" y="2" width="28" height="28" rx="6" stroke="currentColor" stroke-width="2" />
-        <path d="M10 16h12M16 10v12" stroke="#00FF94" stroke-width="2.5" stroke-linecap="round" />
-      </svg>
-      Stack<span>form</span>
-    </div>
-    <ul class="nav-links" id="navLinks">
-      <li><a href="#how">How it works</a></li>
-      <li><a href="#features">Features</a></li>
-      <li><a href="#pricing">Pricing</a></li>
-      <li><a href="calculator/">Calculator</a></li>
-      <li><a href="#cta" class="nav-cta">Start for Free</a></li>
-    </ul>
-    <button class="nav-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')">☰</button>
+<!-- canvas for particle field -->
+<canvas id="canvas"></canvas>
+<div class="grid-overlay"></div>
+<div class="scan-line"></div>
+
+<div class="page">
+
+  <!-- NAV -->
+  <nav class="nav">
+    <span class="nav-logo">~/SEN482/sangari</span>
+    <span class="nav-pill">PIPELINE LIVE</span>
   </nav>
 
-  <!-- Hero -->
+  <!-- HERO -->
   <section class="hero">
-    <div class="hero-badge">
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="3" fill="currentColor"/></svg>
-      v1.0 launched — 100% free tier available
-    </div>
-    <h1>Internal admin panels<br />from a single <em>YAML file</em></h1>
-    <p>Stackform turns a 10-line config into a fully functional admin dashboard. No React, no boilerplate, no backend glue. Built for solo founders who ship fast.</p>
-    <div class="hero-actions">
-      <button class="btn-primary" onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})">Start for Free</button>
-      <button class="btn-secondary" onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'})">See how it works</button>
-    </div>
-    <div class="code-block">
-      <span class="filename">dashboard.yaml</span>
-      <pre><code><span class="token-comment"># admin/dashboard.yaml</span>
-<span class="token-key">pages</span>:
-  <span class="token-key">- title</span>: <span class="token-string">Users</span>
-    <span class="token-key">table</span>:
-      <span class="token-key">source</span>: <span class="token-string">postgres:///app</span>
-      <span class="token-key">query</span>: <span class="token-string">SELECT id, name, email, plan, created_at FROM users</span>
-      <span class="token-key">filters</span>: <span class="token-boolean">true</span>
-      <span class="token-key">editable</span>: <span class="token-boolean">true</span>
+    <div class="eyebrow">SEN 482 — Software Engineering</div>
+    <h1 class="hero-headline">
+      New<br>Correction
+      <span>Automated. Isolated. Production-grade.</span>
+    </h1>
+    <p class="hero-sub">
+      GOIVENOR IS LIVEEEEEEEEEEEEEEEE, coomeeeeeeeeee ohhhhhh
+      fwefwrgaghsergserbthert
+      ytsebygyestyerybesthrhg
+    </p>
 
-  <span class="token-key">- title</span>: <span class="token-string">Orders</span>
-    <span class="token-key">table</span>:
-      <span class="token-key">source</span>: <span class="token-string">postgres:///app</span>
-      <span class="token-key">query</span>: <span class="token-string">SELECT * FROM orders ORDER BY created_at DESC</span>
-      <span class="token-key">export</span>: <span class="token-boolean">true</span></code></pre>
-    </div>
-  </section>
-
-  <!-- How it works -->
-  <section id="how">
-    <div class="container">
-      <div class="section-label">How it works</div>
-      <h2 class="section-title">Three steps to your first internal tool</h2>
-      <p class="section-sub">Write a config file, see it live instantly, then share it with your team. No deploy pipeline required.</p>
-      <div class="steps-grid">
-        <div class="step-card">
-          <div class="step-number">01</div>
-          <h3>Write your YAML config</h3>
-          <p>Define tables, forms, and data sources in a single YAML file. Connect to Postgres, MySQL, or REST APIs.</p>
-          <span class="step-arrow">→</span>
-        </div>
-        <div class="step-card">
-          <div class="step-number">02</div>
-          <h3>Preview in your browser</h3>
-          <p>Stackform parses the config and renders a live admin UI with sortable tables, filters, and inline editing.</p>
-          <span class="step-arrow">→</span>
-        </div>
-        <div class="step-card">
-          <div class="step-number">03</div>
-          <h3>Share with one link</h3>
-          <p>Deploy instantly behind your existing auth or Stackform's built-in access control. Your team gets a URL.</p>
-        </div>
+    <!-- METRICS -->
+    <div class="metrics">
+      <div class="metric">
+        <span class="metric-value" id="m-builds">0</span>
+        <span class="metric-label">Builds Run</span>
+      </div>
+      <div class="metric">
+        <span class="metric-value">100%</span>
+        <span class="metric-label">Deploy Success</span>
+      </div>
+      <div class="metric">
+        <span class="metric-value" id="m-uptime">0s</span>
+        <span class="metric-label">Uptime</span>
+      </div>
+      <div class="metric">
+        <span class="metric-value">v3.1</span>
+        <span class="metric-label">Current Build</span>
       </div>
     </div>
   </section>
 
-  <!-- Features -->
-  <section id="features">
-    <div class="container">
-      <div class="section-label">Features</div>
-      <h2 class="section-title">Everything you need, nothing you don't</h2>
-      <p class="section-sub">Built for the 80% of internal tools that are just CRUD + filters + exports.</p>
-      <div class="features-grid">
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-          </div>
-          <h3>One-file config</h3>
-          <p>Your entire admin panel lives in a single YAML file. Version control it, review it, ship it — just like the rest of your code.</p>
+  <!-- PIPELINE -->
+  <section class="pipeline-section">
+    <div class="section-label">// Deployment Pipeline</div>
+    <div class="pipeline">
+      <div class="pipe-step">
+        <div class="pipe-box"><span class="pipe-dot dot-green"></span>git push</div>
+        <span class="pipe-arrow">→</span>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-box"><span class="pipe-dot dot-blue"></span>GH Actions trigger</div>
+        <span class="pipe-arrow">→</span>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-box"><span class="pipe-dot dot-violet"></span>Build &amp; Test</div>
+        <span class="pipe-arrow">→</span>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-box"><span class="pipe-dot dot-amber"></span>SSH into VPS</div>
+        <span class="pipe-arrow">→</span>
+      </div>
+      <div class="pipe-step">
+        <div class="pipe-box"><span class="pipe-dot dot-cyan"></span>Deploy ✓</div>
+      </div>
+    </div>
+    <div class="pipe-progress"></div>
+  </section>
+
+  <!-- MAIN CARD -->
+  <section class="main-card">
+    <div class="card-left">
+      <span class="card-tag">Project Identity</span>
+      <h2 class="card-title">Abraham Sangari<br>VUG/SEN/22/7970</h2>
+      <p class="card-body">
+        This platform is a live demonstration of a professional continuous deployment workflow. The webroot is managed entirely by automated GitHub Actions workflows — from code commit on a developer machine to live production state on a remote VPS, with no manual steps.
+      </p>
+      <div class="stack-row">
+        <span class="stack-tag st-indigo">GitHub Actions</span>
+        <span class="stack-tag st-cyan">Linux VPS</span>
+        <span class="stack-tag st-green">SSH Deploy</span>
+        <span class="stack-tag st-amber">Nginx</span>
+        <span class="stack-tag st-violet">HTML / JS / CSS</span>
+      </div>
+
+      <!-- COMMIT LOG -->
+      <div class="section-label" style="margin-top:28px;">// Recent Commits</div>
+      <div class="commit-log">
+        <div class="commit">
+          <span class="commit-status" style="background:#4ade80;box-shadow:0 0 5px #4ade80;"></span>
+          <span class="commit-hash">a3f91c</span>
+          <span class="commit-msg">feat: deploy calculator app to webroot</span>
+          <span class="commit-time">2m ago</span>
         </div>
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
-          </div>
-          <h3>Connect your database</h3>
-          <p>Built-in connectors for Postgres, MySQL, SQLite, and REST APIs. Just drop in your connection string and write a query.</p>
+        <div class="commit">
+          <span class="commit-status" style="background:#4ade80;box-shadow:0 0 5px #4ade80;"></span>
+          <span class="commit-hash">b17e40</span>
+          <span class="commit-msg">ci: configure SSH secrets in GH Actions</span>
+          <span class="commit-time">18m ago</span>
         </div>
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-          </div>
-          <h3>Inline editing & forms</h3>
-          <p>Edit rows directly in the table or build custom forms for create/update flows. Stackform generates the UI from your schema.</p>
+        <div class="commit">
+          <span class="commit-status" style="background:#4ade80;box-shadow:0 0 5px #4ade80;"></span>
+          <span class="commit-hash">c9d2a1</span>
+          <span class="commit-msg">chore: set up Nginx reverse proxy config</span>
+          <span class="commit-time">1h ago</span>
         </div>
-        <div class="feature-card">
-          <div class="feature-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          </div>
-          <h3>Deploy in minutes</h3>
-          <p>Self-host with Docker or use Stackform Cloud. Either way you get auth, audit logs, CSV exports, and a public URL in under 5 minutes.</p>
+        <div class="commit">
+          <span class="commit-status" style="background:#60a5fa;box-shadow:0 0 5px #60a5fa;"></span>
+          <span class="commit-hash">d54f3e</span>
+          <span class="commit-msg">init: scaffold project structure</span>
+          <span class="commit-time">3h ago</span>
         </div>
       </div>
     </div>
-  </section>
 
-  <!-- Comparison -->
-  <section id="comparison">
-    <div class="container">
-      <div class="section-label">Comparison</div>
-      <h2 class="section-title">Stackform vs the alternatives</h2>
-      <p class="section-sub">You don't need a full engineering team to ship an admin panel.</p>
-      <div class="comparison-table-wrap">
-        <table class="comparison-table">
-          <thead>
-            <tr><th></th><th>Stackform</th><th>Build it yourself</th><th>Retool</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>Time to first admin page</td><td class="highlight">~10 minutes</td><td>2–5 days</td><td>1–2 hours</td></tr>
-            <tr><td>Lines of code</td><td class="highlight">~10 (YAML)</td><td>500+ (frontend + backend)</td><td>Visual drag & drop</td></tr>
-            <tr><td>Backend required</td><td class="check">No</td><td class="cross">Yes</td><td class="check">No</td></tr>
-            <tr><td>Self-hostable</td><td class="check">Yes</td><td>—</td><td class="cross">Enterprise only</td></tr>
-            <tr><td>Pricing for solo founder</td><td class="highlight">Free</td><td>Engineering time</td><td>$10+/month</td></tr>
-            <tr><td>What you need to know</td><td>YAML + SQL</td><td>React + Node.js + DB</td><td>Visual builder</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </section>
-
-  <!-- Testimonials -->
-  <section>
-    <div class="container">
-      <div class="section-label">Testimonials</div>
-      <h2 class="section-title">Real founders, real speed</h2>
-      <div class="testimonials-grid">
-        <div class="testimonial-card">
-          <div class="stars">★★★★★</div>
-          <blockquote>"I built my entire customer admin panel in one afternoon. The YAML config took me 15 minutes. Stackform replaced what would have been a 2-week detour into building a React CRUD app I didn't want to maintain."</blockquote>
-          <div class="author">
-            <div class="author-avatar">JM</div>
-            <div class="author-info">
-              <strong>Jake Morrison</strong>
-              <span>Founder, PayBridge</span>
-            </div>
+    <div class="card-right">
+      <div>
+        <span class="card-tag">Live Shell Output</span>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <div class="tbar-dot" style="background:#ff5f57;"></div>
+            <div class="tbar-dot" style="background:#febc2e;"></div>
+            <div class="tbar-dot" style="background:#28c840;"></div>
+            <span class="tbar-title">runner@vps-prod ~ deploy.sh</span>
+          </div>
+          <div class="terminal-body" id="terminal-body">
+            <div class="t-line"><span class="t-prompt">$</span><span class="t-cmd">git pull origin main</span></div>
+            <div class="t-line"><span class="t-out">Already up to date.</span></div>
+            <div class="t-line" style="margin-top:4px;"><span class="t-prompt">$</span><span class="t-cmd">./scripts/deploy.sh</span></div>
+            <div class="t-line"><span class="t-out">[<span class="t-hi">INFO</span>] Starting deployment pipeline…</span></div>
+            <div class="t-line"><span class="t-out">[<span class="t-hi">OK</span>  ] Webroot synced → /var/www/html</span></div>
+            <div class="t-line"><span class="t-out">[<span class="t-hi">OK</span>  ] Nginx reloaded successfully</span></div>
+            <div class="t-line" style="margin-top:4px;"><span class="t-prompt">$</span><span class="t-cmd">systemctl status nginx</span></div>
+            <div class="t-line"><span class="t-out">● nginx.service — <span class="t-hi">active (running)</span></span></div>
+            <div class="t-line" style="margin-top:4px;"><span class="t-prompt">$</span><span class="t-cursor"></span></div>
           </div>
         </div>
-        <div class="testimonial-card">
-          <div class="stars">★★★★★</div>
-          <blockquote>"We're a team of 3. I needed to give my ops person a way to view and filter orders without bugging engineering. Stackform took me 20 minutes to set up. She's been using it daily for 3 months with zero support requests."</blockquote>
-          <div class="author">
-            <div class="author-avatar">AT</div>
-            <div class="author-info">
-              <strong>Aiko Tanaka</strong>
-              <span>CTO, RouteMind</span>
-            </div>
-          </div>
+      </div>
+
+      <div style="margin-top:28px;">
+        <div class="section-label">// Environment</div>
+        <div class="stack-row" style="margin-top:12px;">
+          <span class="stack-tag st-green">Production</span>
+          <span class="stack-tag st-cyan">Ubuntu 22.04 LTS</span>
+          <span class="stack-tag st-indigo">Nginx 1.24</span>
+          <span class="stack-tag st-amber">Actions Runner v2</span>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Pricing -->
-  <section id="pricing">
-    <div class="container">
-      <div class="section-label">Pricing</div>
-      <h2 class="section-title">Free to start, cheap to scale</h2>
-      <p class="section-sub">No credit card required. The Free tier includes everything a solo founder needs.</p>
-      <div class="pricing-grid">
-        <div class="pricing-card">
-          <div class="plan-name">Free</div>
-          <div class="price">$0 <span>/month</span></div>
-          <div class="price-desc">For solo founders and side projects</div>
-          <ul>
-            <li>Up to 3 data sources</li>
-            <li>Up to 5 pages</li>
-            <li>CSV export</li>
-            <li>Community support</li>
-            <li>Self-hosted or cloud</li>
-          </ul>
-          <button class="btn-primary" onclick="alert('Sign-up flow goes here')">Start for Free</button>
-        </div>
-        <div class="pricing-card featured">
-          <div class="plan-name">Pro</div>
-          <div class="price">$29 <span>/month</span></div>
-          <div class="price-desc">For small teams shipping fast</div>
-          <ul>
-            <li>Unlimited data sources</li>
-            <li>Unlimited pages</li>
-            <li>Custom actions & webhooks</li>
-            <li>Role-based access control</li>
-            <li>Audit logs</li>
-            <li>Priority support</li>
-          </ul>
-          <button class="btn-primary" onclick="alert('Pro sign-up flow goes here')">Try Pro free for 14 days</button>
-        </div>
+  <!-- CTA -->
+  <section class="cta-section">
+    <div class="cta-glow"></div>
+    <div class="cta-inner">
+      <div class="cta-text">
+        <h2>Launch the Calculator App</h2>
+        <p>The deployed application — a working calculator built and served through this automated CI/CD pipeline. Every interaction runs on code that was shipped via GitHub Actions.</p>
       </div>
+      <a href="./calculator/index.html" class="cta-btn">
+        Open Application
+        <svg class="cta-icon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 10h12M10 4l6 6-6 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
     </div>
   </section>
 
-  <!-- Footer -->
-  <footer>
-    <div class="container">
-      <div class="footer-brand">
-        <div class="logo">
-          <svg viewBox="0 0 32 32" fill="none" width="24" height="24">
-            <rect x="2" y="2" width="28" height="28" rx="6" stroke="currentColor" stroke-width="2" />
-            <path d="M10 16h12M16 10v12" stroke="#00FF94" stroke-width="2.5" stroke-linecap="round" />
-          </svg>
-          Stack<span>form</span>
-        </div>
-        <p>Internal admin panels from a single YAML file. Built for founders who'd rather build their product than a CRUD app.</p>
-      </div>
-      <div class="footer-links">
-        <div class="col">
-          <strong>Product</strong>
-          <a href="#features">Features</a>
-          <a href="#pricing">Pricing</a>
-          <a href="#how">How it works</a>
-          <a href="calculator/">Calculator</a>
-        </div>
-        <div class="col">
-          <strong>Resources</strong>
-          <a href="#">Documentation</a>
-          <a href="#">API reference</a>
-          <a href="#">GitHub</a>
-          <a href="#">Status</a>
-        </div>
-        <div class="col">
-          <strong>Company</strong>
-          <a href="#">Blog</a>
-          <a href="#">Twitter</a>
-          <a href="#">Contact</a>
-        </div>
-      </div>
-      <div class="footer-cta">
-        <button class="btn-primary" onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})">Start for Free</button>
-      </div>
-      <div class="footer-bottom">
-        <span>&copy; 2026 Stackform. All rights reserved.</span>
-        <span>Built for solo founders who ship.</span>
-      </div>
-    </div>
+  <!-- FOOTER -->
+  <footer class="footer">
+    <span class="footer-left">VUG/SEN/22/7970 · VERITAS UNIVERSITY · SEN 482</span>
+    <span class="footer-right">Abraham Sangari &copy; 2025</span>
   </footer>
 
+</div>
+
+<script>
+  /* ── PARTICLE CANVAS ── */
+  const canvas = document.getElementById('canvas');
+  const ctx    = canvas.getContext('2d');
+  let W, H, particles;
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', () => { resize(); initParticles(); });
+
+  function initParticles() {
+    const count = Math.floor((W * H) / 14000);
+    particles = Array.from({ length: count }, () => ({
+      x:  Math.random() * W,
+      y:  Math.random() * H,
+      r:  Math.random() * 1.2 + 0.3,
+      vx: (Math.random() - 0.5) * 0.18,
+      vy: (Math.random() - 0.5) * 0.18,
+      a:  Math.random(),
+    }));
+  }
+  initParticles();
+
+  let mouse = { x: W / 2, y: H / 2 };
+  window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; });
+
+  function drawParticles() {
+    ctx.clearRect(0, 0, W, H);
+    particles.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+      if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+
+      // mouse repel
+      const dx = p.x - mouse.x, dy = p.y - mouse.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 80) {
+        p.x += dx / dist * 1.2;
+        p.y += dy / dist * 1.2;
+      }
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(99,102,241,${p.a * 0.5})`;
+      ctx.fill();
+    });
+
+    // connections
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const d  = Math.sqrt(dx * dx + dy * dy);
+        if (d < 100) {
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(99,102,241,${(1 - d / 100) * 0.12})`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(drawParticles);
+  }
+  drawParticles();
+
+  /* ── COUNTER ANIMATION ── */
+  function animateCount(el, target, suffix, duration) {
+    let start = null;
+    function step(ts) {
+      if (!start) start = ts;
+      const prog = Math.min((ts - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - prog, 3);
+      el.textContent = Math.floor(ease * target) + suffix;
+      if (prog < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+  animateCount(document.getElementById('m-builds'), 47, '', 1800);
+
+  /* ── UPTIME COUNTER ── */
+  let uptimeSec = 43200; // start fake at 12h
+  const uptimeEl = document.getElementById('m-uptime');
+  function fmtUptime(s) {
+    if (s < 60)   return s + 's';
+    if (s < 3600) return Math.floor(s/60) + 'm';
+    return Math.floor(s/3600) + 'h ' + Math.floor((s%3600)/60) + 'm';
+  }
+  uptimeEl.textContent = fmtUptime(uptimeSec);
+  setInterval(() => {
+    uptimeSec++;
+    uptimeEl.textContent = fmtUptime(uptimeSec);
+  }, 1000);
+
+  /* ── TERMINAL TYPEWRITER ── */
+  const lines = [
+    { type:'prompt', text:'git pull origin main' },
+    { type:'out',    text:'Already up to date.' },
+    { type:'prompt', text:'./scripts/deploy.sh' },
+    { type:'out',    text:'[INFO] Starting deployment pipeline…' },
+    { type:'out',    text:'[OK  ] Webroot synced → /var/www/html' },
+    { type:'out',    text:'[OK  ] Nginx reloaded successfully' },
+    { type:'prompt', text:'systemctl status nginx' },
+    { type:'out',    text:'● nginx.service — active (running)' },
+  ];
+  const tb = document.getElementById('terminal-body');
+  let lineIdx = 0, charIdx = 0;
+  let currentEl = null;
+
+  function typeNext() {
+    if (lineIdx >= lines.length) {
+      // pause then restart
+      setTimeout(() => {
+        tb.innerHTML = '';
+        lineIdx = 0; charIdx = 0; currentEl = null;
+        // add cursor row
+        addCursorRow();
+        setTimeout(startTyping, 800);
+      }, 3500);
+      addCursorRow();
+      return;
+    }
+    const line = lines[lineIdx];
+    if (charIdx === 0) {
+      const row = document.createElement('div');
+      row.className = 't-line';
+      if (line.type === 'prompt') {
+        row.innerHTML = '<span class="t-prompt">$</span>';
+        currentEl = document.createElement('span');
+        currentEl.className = 't-cmd';
+        row.appendChild(currentEl);
+      } else {
+        currentEl = document.createElement('span');
+        currentEl.className = 't-out';
+        // colorize
+        currentEl.innerHTML = '';
+        row.appendChild(currentEl);
+      }
+      tb.appendChild(row);
+    }
+
+    if (charIdx < line.text.length) {
+      let ch = line.text[charIdx];
+      currentEl.textContent += ch;
+      charIdx++;
+      setTimeout(typeNext, line.type === 'prompt' ? 55 : 18);
+    } else {
+      lineIdx++; charIdx = 0; currentEl = null;
+      setTimeout(typeNext, line.type === 'prompt' ? 500 : 120);
+    }
+  }
+
+  function addCursorRow() {
+    const row = document.createElement('div');
+    row.className = 't-line';
+    row.innerHTML = '<span class="t-prompt">$</span><span class="t-cursor"></span>';
+    tb.appendChild(row);
+  }
+
+  function startTyping() {
+    typeNext();
+  }
+
+  // delay start so page settles
+  setTimeout(() => {
+    tb.innerHTML = '';
+    addCursorRow();
+    setTimeout(startTyping, 600);
+  }, 1200);
+
+  /* ── SCROLL FADE-IN ── */
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.style.opacity = '1';
+        e.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, { threshold: 0.12 });
+
+  document.querySelectorAll('.pipeline-section, .main-card, .cta-section').forEach(el => {
+    el.style.opacity    = '0';
+    el.style.transform  = 'translateY(32px)';
+    el.style.transition = 'opacity 0.7s ease, transform 0.7s ease';
+    obs.observe(el);
+  });
+</script>
 </body>
 </html>
