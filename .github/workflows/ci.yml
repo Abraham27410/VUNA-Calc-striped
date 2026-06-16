@@ -43,20 +43,10 @@ jobs:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: ./
+          local-dir: calculator/
           server-dir: public_html/
           exclude: |
-            .git/**
+            .git
             .gitignore
-            .github
-            .dockerignore
             node_modules
             coverage
-            test
-            package.json
-            package-lock.json
-            jest.config.js
-            .eslintrc.json
-            Dockerfile
-            docker-compose.yml
-            README.md
