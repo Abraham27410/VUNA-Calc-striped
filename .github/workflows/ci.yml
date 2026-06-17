@@ -69,7 +69,7 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: calculator/
-          server-dir: calculator/
+          server-dir: public_html/calculator/
           dangerous-clean-slate: true
           exclude: |
             .git
@@ -83,3 +83,4 @@ jobs:
           curl -sk -X PURGE "https://sangari.vudse26.cloud/calculator/" || true
           curl -sk -X PURGE "http://sangari.vudse26.cloud/calculator/" || true
           curl -sk -o /dev/null "https://sangari.vudse26.cloud/calculator/" || true
+          curl -sk -o /dev/null "https://sangari.vudse26.cloud/" || true
