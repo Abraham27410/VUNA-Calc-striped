@@ -66,23 +66,22 @@ jobs:
         shell: bash
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq lftp 2>/dev/null
-          lftp -u "${{ secrets.FTP_USERNAME }}","${{ secrets.FTP_PASSWORD }}" "${{ secrets.FTP_SERVER }}" <<EOF
-          set ssl:verify-certificate no
-          set ftp:sync-mode off
-          set cmd:fail-exit no
-          mirror -R --delete --verbose calculator/ public_html/calculator/
-          chmod 644 public_html/calculator/index.html
-          chmod 644 public_html/calculator/assets/css/bootstrap.min.css
-          chmod 644 public_html/calculator/assets/css/calculator.css
-          chmod 644 public_html/calculator/assets/css/styles.css
-          chmod 644 public_html/calculator/assets/js/bootstrap.min.js
-          chmod 644 public_html/calculator/assets/js/script.js
-          chmod 755 public_html/calculator/
-          chmod 755 public_html/calculator/assets/
-          chmod 755 public_html/calculator/assets/css/
-          chmod 755 public_html/calculator/assets/js/
-          quit
-EOF
+          lftp -u "${{ secrets.FTP_USERNAME }}","${{ secrets.FTP_PASSWORD }}" "${{ secrets.FTP_SERVER }}" \
+            -e "set ssl:verify-certificate no; \
+                set ftp:sync-mode off; \
+                set cmd:fail-exit no; \
+                mirror -R --delete --verbose calculator/ public_html/calculator/; \
+                chmod 644 public_html/calculator/index.html; \
+                chmod 644 public_html/calculator/assets/css/bootstrap.min.css; \
+                chmod 644 public_html/calculator/assets/css/calculator.css; \
+                chmod 644 public_html/calculator/assets/css/styles.css; \
+                chmod 644 public_html/calculator/assets/js/bootstrap.min.js; \
+                chmod 644 public_html/calculator/assets/js/script.js; \
+                chmod 755 public_html/calculator/; \
+                chmod 755 public_html/calculator/assets/; \
+                chmod 755 public_html/calculator/assets/css/; \
+                chmod 755 public_html/calculator/assets/js/; \
+                quit"
 
       - name: Verify deployment
         shell: bash
