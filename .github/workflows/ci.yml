@@ -70,17 +70,20 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: calculator/
           server-dir: public_html/calculator/
-          dangerous-clean-slate: true
           exclude: |
             .git
             .gitignore
             node_modules
             coverage
 
-      - name: Purge LiteSpeed cache
+      - name: Verify deployment
         continue-on-error: true
         run: |
-          curl -sk -X PURGE "https://sangari.vudse26.cloud/calculator/" || true
-          curl -sk -X PURGE "http://sangari.vudse26.cloud/calculator/" || true
-          curl -sk -o /dev/null "https://sangari.vudse26.cloud/calculator/" || true
-          curl -sk -o /dev/null "https://sangari.vudse26.cloud/" || true
+          echo "=== Checking calculator page ==="
+          HTTP_CODE=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 10 "https://sangari.vudse26.cloud/calculator/" || echo "failed")
+          echo "HTTP Status: $HTTP_CODE"
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "SUCCESS: Calculator is live!"
+          else
+            echo "FAIL: Got $HTTP_CODE instead of 200"
+          fi
