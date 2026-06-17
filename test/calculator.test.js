@@ -28,16 +28,8 @@ describe('Calculator Expression Normalization', () => {
     expect(normalizeExpression('tan(60)')).toBe('tanDeg(60)');
   });
 
-  test('should convert e to Math.E', () => {
-    expect(normalizeExpression('2 * e')).toBe('2 * Math.E');
-  });
-
-  test('should convert pi to Math.PI', () => {
-    expect(normalizeExpression('2 * pi')).toBe('2 * Math.PI');
-  });
-
-  test('should handle multiple replacements', () => {
-    expect(normalizeExpression('sin(30) + cos(45) * e')).toBe('sinDeg(30) + cosDeg(45) * Math.E');
+  test('should handle multiple trig replacements', () => {
+    expect(normalizeExpression('sin(30) + cos(45)')).toBe('sinDeg(30) + cosDeg(45)');
   });
 });
 
@@ -172,11 +164,6 @@ describe('Calculus Functions', () => {
   test('derivative of x^3 at x=2 should be ~12', () => {
     var result = calculateExpression('deriv(x**3,x,2)', 0);
     expect(Math.abs(result - 12)).toBeLessThan(1e-5);
-  });
-
-  test('derivative of exp(x) at x=0 should be ~1', () => {
-    var result = calculateExpression('deriv(exp(x),x,0)', 0);
-    expect(Math.abs(result - 1)).toBeLessThan(1e-4);
   });
 
   test('derivative of constant 5 should be ~0', () => {

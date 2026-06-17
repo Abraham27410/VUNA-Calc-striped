@@ -38,53 +38,35 @@
                   </div>
 
                   <div class="btn-grid">
+                    <button class="btn btn-action" onclick="clearResult()">AC</button>
                     <button class="btn btn-light" onclick="bracketToResult('(')">(</button>
                     <button class="btn btn-light" onclick="bracketToResult(')')">)</button>
                     <button class="btn btn-light" onclick="backspace()">←</button>
 
-                    <!-- Row trig -->
-                    <button class="btn btn-action" onclick="clearResult()">AC</button>
-
-                    <!-- Row 2 -->
                     <button class="btn btn-light" onclick="appendToResult(7)">7</button>
                     <button class="btn btn-light" onclick="appendToResult(8)">8</button>
                     <button class="btn btn-light" onclick="appendToResult(9)">9</button>
-
-                    <!-- Row 6 -->
-                    <button class="btn btn-light" onclick="appendToResult('e')">e</button>
-                    <button class="btn btn-light" onclick="appendToResult('π')">π</button>
-                    <button class="btn btn-light" onclick="appendToResult('^')">^</button>
-
-                    <!-- Row 7 -->
-                    <button class="btn btn-light" onclick="appendToResult('E')">E</button>
-                    <button class="btn btn-light" onclick="appendToResult('exp')">exp</button>
-                    <button class="btn btn-light" onclick="appendToResult('ln')">ln</button>
-
-                    <!-- Row 3 -->
                     <button class="btn btn-operator" onclick="operatorToResult('/')">÷</button>
+
                     <button class="btn btn-light" onclick="appendToResult(4)">4</button>
                     <button class="btn btn-light" onclick="appendToResult(5)">5</button>
                     <button class="btn btn-light" onclick="appendToResult(6)">6</button>
-
-                    <!-- Row 4 -->
                     <button class="btn btn-operator" onclick="operatorToResult('*')">×</button>
+
                     <button class="btn btn-light" onclick="appendToResult(1)">1</button>
                     <button class="btn btn-light" onclick="appendToResult(2)">2</button>
                     <button class="btn btn-light" onclick="appendToResult(3)">3</button>
-
-                    <!-- Row 5 -->
-                    <button class="btn btn-operator" onclick="operatorToResult('+')">+</button>
-                    <button class="btn btn-light" onclick="appendToResult('.')">.</button>
-                    <button class="btn btn-light" onclick="appendToResult(0)">0</button>
-                    <button class="btn btn-operator" onclick="percentToResult('%')">%</button>
-                    
-                    <button class="btn btn-special" onclick="appendToResult('deriv(')">d/dx</button>
-                    <button class="btn btn-special" onclick="appendToResult('integral(')">∫</button>
-                    
-                    <!-- Row 9 -->
                     <button class="btn btn-operator" onclick="operatorToResult('-')">−</button>
 
-                    <button class="btn btn-equals" onclick="calculateResult()" style="grid-column: span 4;">=</button>
+                    <button class="btn btn-light" onclick="appendToResult(0)">0</button>
+                    <button class="btn btn-light" onclick="appendToResult('.')">.</button>
+                    <button class="btn btn-light" onclick="appendToResult('^')">^</button>
+                    <button class="btn btn-operator" onclick="operatorToResult('+')">+</button>
+
+                    <button class="btn btn-special" onclick="appendToResult('deriv(')">d/dx</button>
+                    <button class="btn btn-special" onclick="appendToResult('integral(')">∫</button>
+                    <button class="btn btn-operator" onclick="percentToResult('%')">%</button>
+                    <button class="btn btn-equals" onclick="calculateResult()">=</button>
                   </div>
                 </div>
               </div>

@@ -11,8 +11,6 @@ var KNOWN_FUNCTIONS = new Set([
   "asinh",
   "sqrt",
   "log",
-  "ln",
-  "exp",
   "abs",
   "ceil",
   "floor",
@@ -105,9 +103,7 @@ function normalizeExpression(expr) {
     .replace(/cos\(/g, "cosDeg(")
     .replace(/tan\(/g, "tanDeg(")
     .replace(/asinh\(/g, "asinh(")
-    .replace(/sinh\(/g, "sinh(")
-    .replace(/\be\b/g, "Math.E")
-    .replace(/\bpi\b/g, "Math.PI");
+    .replace(/sinh\(/g, "sinh(");
 }
 
 function tokenize(expr) {
@@ -149,11 +145,7 @@ function tokenize(expr) {
         ident += expr[i];
         i++;
       }
-      if (ident === "Math.E") {
-        tokens.push({ type: "NUMBER", value: Math.E });
-      } else if (ident === "Math.PI") {
-        tokens.push({ type: "NUMBER", value: Math.PI });
-      } else if (KNOWN_FUNCTIONS.has(ident)) {
+      if (KNOWN_FUNCTIONS.has(ident)) {
         tokens.push({ type: "FUNCTION", value: ident });
       } else {
         tokens.push({ type: "VARIABLE", value: ident });
@@ -213,10 +205,6 @@ function applyFunction(name, arg) {
       return Math.sqrt(arg);
     case "log":
       return Math.log(arg);
-    case "ln":
-      return Math.log(arg);
-    case "exp":
-      return Math.exp(arg);
     case "abs":
       return Math.abs(arg);
     case "ceil":
