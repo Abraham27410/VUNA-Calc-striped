@@ -22,13 +22,15 @@ RUN npm test
 # Production stage
 FROM nginx:1.25-alpine
 
+# Install curl for healthcheck
+RUN apk add --no-cache curl
+
 # Remove default nginx static files
 RUN rm -rf /usr/share/nginx/html/*
 
 # Copy application files from builder stage
 COPY --from=builder /app/index.html /usr/share/nginx/html/
 COPY --from=builder /app/calculator/ /usr/share/nginx/html/calculator/
-COPY --from=builder /app/.gitignore /usr/share/nginx/html/
 
 # Set proper permissions
 RUN chmod -R 755 /usr/share/nginx/html

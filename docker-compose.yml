@@ -2,6 +2,7 @@
 
 services:
   vuna-calculator:
+    image: ${DOCKERHUB_USERNAME:-your-dockerhub-username}/vuna-calculator:latest
     build: .
     ports:
       - "80:80"
