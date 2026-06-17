@@ -62,25 +62,29 @@ jobs:
             ${{ env.DOCKER_IMAGE }}:latest
             ${{ env.DOCKER_IMAGE }}:${{ github.sha }}
 
-      - name: Deploy via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
-        with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: calculator/
-          server-dir: public_html/calculator/
-          exclude: |
-            .git
-            .gitignore
-            node_modules
-            coverage
+      - name: Deploy via FTP with permission fix
+        shell: bash
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq lftp 2>/dev/null
+          lftp -u "${{ secrets.FTP_USERNAME }}","${{ secrets.FTP_PASSWORD }}" "${{ secrets.FTP_SERVER }}" <<EOF
+          set ssl:verify-certificate no
+          set ftp:sync-mode off
+          mirror -R --delete --verbose calculator/ public_html/calculator/
+          chmod 644 public_html/calculator/index.html
+          chmod 644 public_html/calculator/assets/css/*.css
+          chmod 644 public_html/calculator/assets/js/*.js
+          chmod 755 public_html/calculator/
+          chmod 755 public_html/calculator/assets/
+          chmod 755 public_html/calculator/assets/css/
+          chmod 755 public_html/calculator/assets/js/
+          quit
+EOF
 
       - name: Verify deployment
-        continue-on-error: true
+        shell: bash
         run: |
           echo "=== Checking calculator page ==="
-          HTTP_CODE=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 10 "https://sangari.vudse26.cloud/calculator/" || echo "failed")
+          HTTP_CODE=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 15 "https://sangari.vudse26.cloud/calculator/" || echo "failed")
           echo "HTTP Status: $HTTP_CODE"
           if [ "$HTTP_CODE" = "200" ]; then
             echo "SUCCESS: Calculator is live!"
