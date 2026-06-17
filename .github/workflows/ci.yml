@@ -70,13 +70,16 @@ jobs:
             -e "set ssl:verify-certificate no; \
                 set ftp:sync-mode off; \
                 set cmd:fail-exit no; \
+                put index.html -o public_html/index.html; \
                 mirror -R --delete --verbose calculator/ public_html/calculator/; \
+                chmod 644 public_html/index.html; \
                 chmod 644 public_html/calculator/index.html; \
                 chmod 644 public_html/calculator/assets/css/bootstrap.min.css; \
                 chmod 644 public_html/calculator/assets/css/calculator.css; \
                 chmod 644 public_html/calculator/assets/css/styles.css; \
                 chmod 644 public_html/calculator/assets/js/bootstrap.min.js; \
                 chmod 644 public_html/calculator/assets/js/script.js; \
+                chmod 755 public_html/; \
                 chmod 755 public_html/calculator/; \
                 chmod 755 public_html/calculator/assets/; \
                 chmod 755 public_html/calculator/assets/css/; \
@@ -86,6 +89,14 @@ jobs:
       - name: Verify deployment
         shell: bash
         run: |
+          echo "=== Checking root page ==="
+          HTTP_CODE=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 15 -H "Cache-Control: no-cache, no-store" "https://sangari.vudse26.cloud/" || echo "failed")
+          echo "HTTP Status: $HTTP_CODE"
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "SUCCESS: Root is live!"
+          else
+            echo "FAIL: Got $HTTP_CODE instead of 200"
+          fi
           echo "=== Checking calculator page ==="
           HTTP_CODE=$(curl -sk -o /dev/null -w "%{http_code}" --max-time 15 -H "Cache-Control: no-cache, no-store" "https://sangari.vudse26.cloud/calculator/" || echo "failed")
           echo "HTTP Status: $HTTP_CODE"
